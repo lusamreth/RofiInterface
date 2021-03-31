@@ -184,6 +184,7 @@ impl Rofi {
     pub fn finish(self) -> RofiChild {
         let mut cmd = Command::new("rofi");
         cmd.kill_on_drop(true);
+
         if self.mode.as_str() != "Message" {
             cmd.arg("-show");
             cmd.arg(self.mode);

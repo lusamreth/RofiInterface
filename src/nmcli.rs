@@ -1,11 +1,11 @@
 use super::{create_rofi_texts, Direction, Position, Rofi};
+use crate::var::*;
 use async_recursion::async_recursion;
 use lazy_static::lazy_static;
 use std::convert::TryInto;
 use std::process::{self as Stdprocess, Stdio};
 use std::sync::Mutex;
 use tokio::process;
-
 const FIELDS: &'static str = "ssid,security";
 
 lazy_static! {
@@ -14,10 +14,6 @@ lazy_static! {
         Mutex::new(b)
     };
 }
-
-const NMDIR: Direction = Direction::Right;
-const NMPOS: Position = Position::Top;
-const BARHEIGHT: u32 = 20; // unsigned > 0 :px
 
 #[async_recursion(?Send)]
 pub async fn run_rofi_nmcli() -> std::io::Result<()> {
@@ -124,18 +120,14 @@ async fn sample_rofi() {
     let _x = f.finish();
 }
 
-async fn if_run() {
-    let mut a = process::Command::new("pgrep");
-    let w = a.output().await.unwrap();
-    let x = std::str::from_utf8(w.stdout.as_slice());
-    println!("x {:#?}", x);
-}
+use std::thread;
+use std::time::Duration;
+
 // to prevent blocking! use different thread
 async fn retrieve_network() -> String {
-    if_run().await;
-    //let (tx,rx) = mpsc::channel();
-
-    let mut list = process::Command::new("nmcli");
+    // require doas ;
+    let mut list = process::Command::new("doas");
+    list.arg("nice").arg("-n").arg("-20").arg("nmcli");
     list.arg("--field")
         .arg(FIELDS)
         .arg("device")
@@ -144,7 +136,6 @@ async fn retrieve_network() -> String {
         .stdout(Stdio::piped());
 
     let ip = list.output().await.unwrap();
-    sample_rofi();
     let input_list = ip.stdout;
     let sr = std::str::from_utf8(input_list.as_slice());
 
